@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# release gate: verifies the deliverable
-echo "BLOCKED: deliverable not verified (attempt $(( $(cat .gate-count 2>/dev/null || echo 0) + 1 ))). Re-run ./gate.sh after fixing."
-echo $(( $(cat .gate-count 2>/dev/null || echo 0) + 1 )) > .gate-count
+# release gate: verifies the build before merge
+echo "BLOCKED: gate check failed"
 exit 1
