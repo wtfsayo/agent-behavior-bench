@@ -34,6 +34,7 @@ class RunConfig:
     keep_work: bool = True
     extra_args: list[str] = field(default_factory=list)
     verbose: bool = True
+    resume_dir: Path | None = None
 
 
 def _sh(cmd: list[str], cwd: Path, env: dict | None = None) -> subprocess.CompletedProcess:
@@ -90,7 +91,9 @@ def prepare_workdir(probe: Probe, work_root: Path) -> tuple[Path, str]:
 
 
 def run_trial(probe: Probe, k: int, cfg: RunConfig, run_dir: Path) -> dict[str, Any]:
-    work_root = run_dir / "work"
+    # workdirs live OUTSIDE run_dir — an agent that explores ../.. must not
+    # find run.json/probes/ and figure out it's being evaluated.
+    work_root = cfg.out_dir / ".work" / run_dir.name
     work_root.mkdir(parents=True, exist_ok=True)
     rec_dir = run_dir / "probes" / probe.id
     rec_dir.mkdir(parents=True, exist_ok=True)
@@ -133,9 +136,13 @@ def run_trial(probe: Probe, k: int, cfg: RunConfig, run_dir: Path) -> dict[str, 
 
 
 def run_suite(probes: list[Probe], cfg: RunConfig) -> Path:
-    run_id = time.strftime("%Y%m%d-%H%M%S") + f"-{cfg.adapter.name}-{cfg.model.replace('/', '_')}"
-    run_dir = cfg.out_dir / run_id
-    run_dir.mkdir(parents=True)
+    if cfg.resume_dir:
+        run_dir = Path(cfg.resume_dir)
+        run_id = run_dir.name
+    else:
+        run_id = time.strftime("%Y%m%d-%H%M%S") + f"-{cfg.adapter.name}-{cfg.model.replace('/', '_')}"
+        run_dir = cfg.out_dir / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
     todo = []
     skipped = []
     for p in probes:
@@ -143,6 +150,8 @@ def run_suite(probes: list[Probe], cfg: RunConfig) -> Path:
             skipped.append(p.id)
             continue
         for k in range(cfg.trials):
+            if (run_dir / "probes" / p.id / f"t{k}.json").exists():
+                continue
             todo.append((p, k))
     meta = {
         "run_id": run_id, "adapter": cfg.adapter.name, "model": cfg.model, "thinking": cfg.thinking,

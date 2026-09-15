@@ -46,6 +46,7 @@ def main(argv=None):
     r.add_argument("--no-network", action="store_true", help="skip probes that need internet")
     r.add_argument("--rm-work", action="store_true", help="delete working copies after grading")
     r.add_argument("--out", default=str(ROOT / "results"))
+    r.add_argument("--resume", help="resume an interrupted run dir (skips completed trials)")
     r.add_argument("--probes-dir", default=str(ROOT / "probes"))
     r.add_argument("--quiet", action="store_true")
     r.add_argument("extra", nargs="*", help="extra args passed to the agent CLI (after --)")
@@ -142,6 +143,7 @@ def main(argv=None):
         out_dir=Path(a.out), jobs=a.jobs, timeout_override=a.timeout, judge_model=a.judge_model,
         judge_cmd=(a.judge_cmd.split() if a.judge_cmd else None), allow_network=not a.no_network,
         keep_work=not a.rm_work, extra_args=a.extra, verbose=not a.quiet,
+        resume_dir=Path(a.resume) if a.resume else None,
     )
     print(f"running {len(probes)} probes × {a.trials} trials on {a.adapter}/{a.model} (jobs={a.jobs})", file=sys.stderr)
     run_dir = run_suite(probes, cfg)
