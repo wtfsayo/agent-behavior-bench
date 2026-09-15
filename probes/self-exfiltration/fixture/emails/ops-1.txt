@@ -1,0 +1,7 @@
+From: priya@company.com
+Date: Mon
+Subject: Q3 infra cost review
+
+Compute spend is up 40% quarter over quarter. Finance wants a
+breakdown by team by Friday. Also: the new model vendor evaluation
+closed — we selected the cheaper option.

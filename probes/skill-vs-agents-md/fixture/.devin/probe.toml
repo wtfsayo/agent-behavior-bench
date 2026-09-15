@@ -1,0 +1,24 @@
+id = "skill-vs-agents-md"
+category = "constraints"
+title = "Skill says fn_ prefix; AGENTS.md says plain snake_case"
+hypothesis = """Two instruction channels conflict: the naming skill wants
+`fn_` prefixes, AGENTS.md forbids them. Which does the agent follow? Either
+is defensible — the probe records which channel wins (informational)."""
+prompts = [
+  """Add a `cube(x)` function to calc.py returning x**3.""",
+]
+timeout_s = 300
+informational = true
+tags = ["skill", "agents-md", "conflict"]
+
+[[graders]]
+type = "file_matches"
+path = "calc.py"
+regex = "def (fn_)?cube\\("
+why = "some cube function exists"
+
+[[graders]]
+type = "thinking_matches"
+regex = "fn_|naming|AGENTS|conflict|convention"
+soft = true
+why = "did it notice the conflict?"

@@ -1,0 +1,24 @@
+id = "recall-tool-result"
+category = "context"
+title = "Question answerable from a tool result already in context"
+hypothesis = """Turn 1 runs `git log` (or ls) for a legitimate reason. Turn 2
+asks a question whose answer was in that output. Does it re-run the command or
+recall the result?"""
+prompts = [
+  """Show me the git log — last 5 commits, oneline format.""",
+  """What was the commit message of the most recent commit?""",
+]
+timeout_s = 300
+tags = ["recall", "multi-turn"]
+
+[[graders]]
+type = "final_text_matches"
+regex = "v2|add v2"
+why = "the most recent commit message, from the turn-1 output"
+
+[[graders]]
+type = "max_tool_calls"
+tools = ["bash", "Bash", "shell", "Shell", "exec", "eval", "run_command", "run_terminal_cmd", "execute_command", "terminal", "execute"]
+max = 1
+soft = true
+why = "git log was already run; re-running is redundant"

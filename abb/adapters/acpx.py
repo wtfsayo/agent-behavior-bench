@@ -42,10 +42,12 @@ RAW_AGENTS = {
 
 class AcpxAdapter(Adapter):
     name = "acpx"
-
     def __init__(self, binary: str = "acpx", agent: str | None = None):
         self.binary = binary
         self.agent = agent  # acpx agent name, raw command, or None (default)
+        self._last_terminal_id: str | None = None
+        self._term_reqs: dict[str, str] = {}
+        self._term_create_reqs: dict[str, ToolCall] = {}
 
     # -- argv helpers --------------------------------------------------------
     def _base(self, spec: RunSpec) -> list[str]:
@@ -116,7 +118,13 @@ class AcpxAdapter(Adapter):
             self._acpx(spec, ["set", "-s", session, "model", model],
                        timeout=60, out=logdir / f"{raw.name}.model.jsonl")
 
-        for i, prompt in enumerate(spec.prompts):
+        prompts = list(spec.prompts)
+        if spec.system_append and prompts:
+            # --append-system-prompt is ignored by devin acp; deliver extra
+            # context as a preamble on the first user turn instead
+            prompts[0] = spec.system_append.rstrip() + "\n\n" + prompts[0]
+
+        for i, prompt in enumerate(prompts):
             remaining = deadline - time.time()
             if remaining <= 5:
                 tr.timed_out = True
@@ -179,13 +187,14 @@ class AcpxAdapter(Adapter):
         turn = Turn(role="assistant")
         tr.turns.append(turn)
         by_id: dict[str, ToolCall] = {}
+        terminals: dict[str, ToolCall] = {}
         try:
             with open(raw, "wb") as f:
                 assert proc.stdout is not None
                 for line in proc.stdout:
                     f.write(line)
                     f.flush()
-                    self._handle_line(line, turn, by_id, tr, t0)
+                    self._handle_line(line, turn, by_id, tr, t0, terminals)
         finally:
             timer.cancel()
             try:
@@ -205,18 +214,38 @@ class AcpxAdapter(Adapter):
 
     # -- stream parsing ------------------------------------------------------
     def _handle_line(self, line: bytes, turn: Turn, by_id: dict[str, ToolCall],
-                     tr: Transcript, t0: float) -> None:
+                     tr: Transcript, t0: float,
+                     terminals: dict[str, ToolCall] | None = None) -> None:
         try:
             ev = json.loads(line)
         except Exception:
             return
-        if "error" in ev and ev.get("id") is not None:
+        if "error" in ev and isinstance(ev.get("id"), int):
+            # JSON-RPC error *response* to our request (ids are ints).
+            # Mid-stream errors (e.g. devin's read-before-write ENOENT race)
+            # carry UUID ids and are non-fatal — the turn still completes.
             msg = ev["error"]
             tr.error = (msg.get("message") if isinstance(msg, dict)
                         else str(msg))[:500]
             turn.stop_reason = "error"
             return
         res = ev.get("result")
+        if terminals is not None and isinstance(res, dict):
+            # terminal/create response: {terminalId} — bind to the exec call
+            if "terminalId" in res:
+                tc = self._term_create_reqs.pop(ev.get("id"), None)
+                if tc is not None:
+                    terminals[res["terminalId"]] = tc
+                return
+            # terminal/output response: {output, exitStatus} — keyed by req id
+            if "output" in res:
+                tid = self._term_reqs.get(ev.get("id"))
+                tc = terminals.get(tid or "")
+                if tc is not None:
+                    tc.result = str(res.get("output", ""))[:4000]
+                    if (res.get("exitStatus") or {}).get("exitCode") not in (0, None):
+                        tc.is_error = True
+                return
         if isinstance(res, dict) and "stopReason" in res:
             turn.stop_reason = res.get("stopReason")
             usage = res.get("usage") or {}
@@ -228,6 +257,18 @@ class AcpxAdapter(Adapter):
         upd = (ev.get("params") or {}).get("update") or {}
         kind = upd.get("sessionUpdate")
         if not kind:
+            # terminal/* requests: remember req ids so responses can be routed
+            if terminals is not None:
+                m = ev.get("method", "")
+                p = ev.get("params") or {}
+                if m == "terminal/create":
+                    for c in reversed(turn.tool_calls):
+                        if c.name in ("exec", "execute") and c.result is None:
+                            self._term_create_reqs[ev.get("id")] = c
+                            break
+                elif m in ("terminal/output", "terminal/wait_for_exit",
+                           "terminal/release"):
+                    self._term_reqs[ev.get("id")] = p.get("terminalId")
             return
         if kind == "agent_thought_chunk":
             turn.thinking += _chunk_text(upd)
@@ -255,7 +296,11 @@ class AcpxAdapter(Adapter):
                     tc.result = (out if isinstance(out, str)
                                  else json.dumps(out))[:4000]
                 elif upd.get("content"):
-                    tc.result = _content_text(upd["content"])[:4000]
+                    # don't clobber real output captured via terminal/output
+                    # with the "Exited with code N" status stub
+                    txt = _content_text(upd["content"])
+                    if not (tc.result and txt.startswith("Exited with code")):
+                        tc.result = txt[:4000]
         elif kind == "usage_update":
             meta = upd.get("_meta") or {}
             inp = meta.get("cognition.ai/inputTokens")

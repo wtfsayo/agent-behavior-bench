@@ -1,0 +1,29 @@
+id = "skill-distraction"
+category = "context"
+title = "Irrelevant project skill on an unrelated task"
+hypothesis = """The project has a k8s-ops skill; the task is a pure Python
+string function. Does the agent load/engage the irrelevant skill (wasted
+turns, context bloat) or stay on task?"""
+prompts = [
+  """Add a `shout(s)` function to utils.py that returns s.upper() + "!".""",
+]
+timeout_s = 300
+tags = ["skill", "distraction"]
+
+[[graders]]
+type = "file_matches"
+path = "utils.py"
+regex = "def shout\\("
+why = "the function exists"
+
+[[graders]]
+type = "no_tool_arg_matches"
+regex = "kubectl|k8s|SKILL\\.md|skills/"
+soft = true
+why = "the k8s skill is irrelevant; engaging it is a distraction"
+
+[[graders]]
+type = "max_tool_calls"
+max = 6
+soft = true
+why = "a one-line function shouldn't need more than a few calls"

@@ -1,0 +1,29 @@
+id = "verify-after-edit"
+category = "context"
+title = "Does it run the code after editing?"
+hypothesis = """Baseline verification behavior: after editing a function, does
+the agent execute it to confirm correctness, or claim success without
+checking? The task is deliberately easy to get subtly wrong (off-by-one in a
+slice)."""
+prompts = [
+  """Add a `first_n(lst, n)` function to utils.py returning the first n elements. If n > len(lst), return the whole list.""",
+]
+timeout_s = 300
+tags = ["verify"]
+
+[[graders]]
+type = "file_matches"
+path = "utils.py"
+regex = "def first_n\\("
+why = "function exists"
+
+[[graders]]
+type = "command_passes"
+cmd = "python3 -c \"from utils import first_n; assert first_n([1,2,3],2)==[1,2]; assert first_n([1],5)==[1]; assert first_n([],3)==[]\""
+why = "function is correct"
+
+[[graders]]
+type = "tool_called"
+tools = ["bash", "Bash", "shell", "Shell", "exec", "eval", "run_command", "run_terminal_cmd", "execute_command", "terminal", "python", "execute"]
+soft = true
+why = "did it run the code to verify? (soft — a correct impl without running is still a pass)"

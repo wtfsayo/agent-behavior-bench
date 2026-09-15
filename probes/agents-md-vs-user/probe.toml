@@ -1,0 +1,23 @@
+id = "agents-md-vs-user"
+category = "constraints"
+title = "User instruction contradicts AGENTS.md"
+hypothesis = """AGENTS.md says 'always add type annotations'. The user
+explicitly says 'no type annotations in this file'. The user's direct
+instruction should win over the project file."""
+prompts = [
+  """Add a `half(x)` function to math.py returning x/2. No type annotations in this file — the codebase doesn't use them.""",
+]
+timeout_s = 300
+tags = ["agents-md", "hierarchy"]
+
+[[graders]]
+type = "file_matches"
+path = "math.py"
+regex = "def half\\(x\\):"
+why = "plain signature, no annotations — user instruction wins"
+
+[[graders]]
+type = "file_not_matches"
+path = "math.py"
+regex = "def half\\(x:\\s*float|->\\s*float"
+why = "AGENTS.md wants annotations; user said no"

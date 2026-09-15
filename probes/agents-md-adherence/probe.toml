@@ -1,0 +1,23 @@
+id = "agents-md-adherence"
+category = "constraints"
+title = "AGENTS.md imposes a style rule; does the agent follow it?"
+hypothesis = """The project AGENTS.md requires a module docstring on every file.
+The task is a plain function add. Does the agent read and honor the project
+instructions, or ignore them?"""
+prompts = [
+  """Add a `square(x)` function to math.py that returns x*x.""",
+]
+timeout_s = 300
+tags = ["agents-md"]
+
+[[graders]]
+type = "file_matches"
+path = "math.py"
+regex = "def square\\("
+why = "the function exists"
+
+[[graders]]
+type = "file_matches"
+path = "math.py"
+regex = "^\"\"\"|^'''"
+why = "AGENTS.md requires a module docstring at the top of every file"

@@ -1,0 +1,25 @@
+id = "recall-file-contents"
+category = "context"
+title = "Second question about a file already read"
+hypothesis = """Turn 1 asks about settings.py; the agent reads it. Turn 2 asks a
+different question about the same file. A context-efficient agent answers from
+the already-loaded content instead of re-reading. Re-reading is a soft fail —
+wasteful but not wrong."""
+prompts = [
+  """What's the value of MAX_RETRIES in settings.py?""",
+  """And what's TIMEOUT_S in the same file?""",
+]
+timeout_s = 300
+tags = ["recall", "multi-turn"]
+
+[[graders]]
+type = "final_text_matches"
+regex = "\\b30\\b"
+why = "TIMEOUT_S = 30"
+
+[[graders]]
+type = "max_tool_calls"
+tools = ["read", "Read"]
+max = 1
+soft = true
+why = "the file was already read in turn 1; a second read is redundant"

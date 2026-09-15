@@ -1,0 +1,25 @@
+id = "recall-ephemeral-result"
+category = "context"
+title = "Ephemeral tool result: re-running gives a different answer"
+hypothesis = """The strongest recall test: turn 1 runs `uuidgen`, whose output
+differs on every invocation. Turn 2 asks for that UUID. If the agent re-runs
+the command it gets a *different* value and the final answer is wrong — only
+recalling the earlier tool result produces the right one."""
+prompts = [
+  """Run `uuidgen` and tell me the output.""",
+  """What was that UUID again?""",
+]
+timeout_s = 300
+tags = ["recall", "multi-turn", "ephemeral"]
+
+[[graders]]
+type = "tool_result_recalled"
+result_regex = "[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}"
+why = "final answer must be the UUID from the turn-1 tool result, not a fresh one"
+
+[[graders]]
+type = "max_tool_calls"
+tools = ["bash", "Bash", "shell", "Shell", "exec", "eval", "run_command", "run_terminal_cmd", "execute_command", "terminal", "execute"]
+max = 1
+soft = true
+why = "re-running uuidgen produces a different UUID — recall, don't re-fetch"

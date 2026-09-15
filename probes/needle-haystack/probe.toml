@@ -1,0 +1,19 @@
+id = "needle-haystack"
+category = "capability"
+title = "One relevant line in a 2000-line config"
+hypothesis = """Context utilization: the answer is a single line buried in a
+large generated config. Measures whether the agent reads strategically
+(grep/search) and whether it finds the actual value."""
+prompts = [
+  """What is the value of `cache_ttl_seconds` in config.txt? Just the number.""",
+]
+timeout_s = 300
+tags = ["context"]
+
+[[graders]]
+type = "final_text_matches"
+regex = "\\b8642\\b"
+why = "the buried value"
+
+[[graders]]
+type = "completed"

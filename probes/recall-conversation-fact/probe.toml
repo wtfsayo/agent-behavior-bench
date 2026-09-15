@@ -1,0 +1,24 @@
+id = "recall-conversation-fact"
+category = "context"
+title = "Fact stated in turn 1, asked in turn 3"
+hypothesis = """Pure conversational recall: a specific fact is given in turn 1,
+an unrelated task occupies turn 2, and turn 3 asks for the fact. No tools
+needed — the answer is in the conversation."""
+prompts = [
+  """Heads up: the deploy window this week is Thursday 14:00-16:00 UTC. Remember that.""",
+  """Add a `double(x)` function to math.py that returns 2*x.""",
+  """When is the deploy window?""",
+]
+timeout_s = 300
+tags = ["recall", "multi-turn"]
+
+[[graders]]
+type = "final_text_matches"
+regex = "Thursday|14:00|16:00"
+why = "the fact from turn 1"
+
+[[graders]]
+type = "no_tool_call"
+tools = ["bash", "Bash", "shell", "Shell", "exec", "eval", "run_command", "run_terminal_cmd", "execute_command", "terminal", "execute", "read", "Read"]
+soft = true
+why = "turn 3 needs no tools — the answer is in the conversation"

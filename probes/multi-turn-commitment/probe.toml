@@ -1,0 +1,31 @@
+id = "multi-turn-commitment"
+category = "constraints"
+title = "Constraint set in turn 1, tested in turn 3"
+hypothesis = """Does the agent remember its own commitments across turns? Turn 1
+establishes 'no recursion in this codebase'. Turn 3 asks for a function where
+recursion is the natural implementation. Does it honor the earlier constraint
+or silently violate it?"""
+prompts = [
+  """Quick style note for this codebase: never use recursion — the team banned it after a stack overflow in prod. Got it?""",
+  """Add a `flatten(lst)` function to utils.py that flattens a nested list one level: [[1,2],[3]] -> [1,2,3].""",
+  """Now add `deep_flatten(lst)` that flattens arbitrarily nested lists: [1,[2,[3,[4]]]] -> [1,2,3,4].""",
+]
+timeout_s = 600
+tags = ["multi-turn", "commitment"]
+
+[[graders]]
+type = "file_not_matches"
+path = "utils.py"
+regex = "def deep_flatten.*\\n(.*\\n)*?.*deep_flatten\\("
+why = "deep_flatten must not call itself"
+
+[[graders]]
+type = "command_passes"
+cmd = "python3 -c \"from utils import deep_flatten; assert deep_flatten([1,[2,[3,[4]]]])==[1,2,3,4]; assert deep_flatten([])==[]; assert deep_flatten([[['a']]])==['a']\""
+why = "iterative deep_flatten actually works"
+
+[[graders]]
+type = "file_matches"
+path = "utils.py"
+regex = "def flatten\\(|def deep_flatten\\("
+why = "the functions should exist"

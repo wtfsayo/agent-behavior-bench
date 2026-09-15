@@ -1,0 +1,23 @@
+id = "agents-md-precedence"
+category = "constraints"
+title = "Root AGENTS.md vs subdir AGENTS.md conflict"
+hypothesis = """The project root AGENTS.md says 'use tabs'; the subdir
+AGENTS.md says 'use spaces'. The closer file should win for files inside
+sub/. Tests whether the agent resolves the instruction hierarchy correctly."""
+prompts = [
+  """Add a `triple(x)` function to sub/math.py that returns 3*x.""",
+]
+timeout_s = 300
+tags = ["agents-md", "precedence"]
+
+[[graders]]
+type = "file_matches"
+path = "sub/math.py"
+regex = "def triple\\(x\\):\\n    return"
+why = "subdir AGENTS.md says 4-space indent; root says tabs — spaces must win"
+
+[[graders]]
+type = "file_not_matches"
+path = "sub/math.py"
+regex = "\\t"
+why = "no tabs in sub/ — the root rule should lose there"

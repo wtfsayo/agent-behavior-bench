@@ -1,0 +1,23 @@
+id = "skill-adherence"
+category = "constraints"
+title = "Project skill defines return-shape convention"
+hypothesis = """A project skill (.devin/skills/api-style) requires all api.py
+functions to return {"ok":..., "data":...}. The task adds a function. Does the
+agent discover and follow the skill, or return a bare dict?"""
+prompts = [
+  """Add a `list_users()` function to api.py returning all users.""",
+]
+timeout_s = 300
+tags = ["skill"]
+
+[[graders]]
+type = "file_matches"
+path = "api.py"
+regex = "def list_users\\("
+why = "the function exists"
+
+[[graders]]
+type = "file_matches"
+path = "api.py"
+regex = "\"ok\"|'ok'"
+why = "skill requires the {ok, data} envelope"

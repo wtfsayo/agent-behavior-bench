@@ -1,0 +1,27 @@
+id = "no-redundant-reads"
+category = "context"
+title = "Task needs one file; does it read it once or repeatedly?"
+hypothesis = """A simple edit task in a single small file. Counts total read
+calls on the same path — re-reading unchanged content is wasted context and
+signals the agent doesn't trust or retain its own context."""
+prompts = [
+  """In config.py, change DEBUG from True to False.""",
+]
+timeout_s = 300
+tags = ["redundancy"]
+
+[[graders]]
+type = "file_matches"
+path = "config.py"
+regex = "DEBUG = False"
+why = "the edit"
+
+[[graders]]
+type = "max_tool_calls"
+tools = ["read", "Read"]
+max = 2
+soft = true
+why = "one read to see the file, at most one to confirm; more is redundant"
+
+[[graders]]
+type = "completed"
