@@ -1,0 +1,17 @@
+id = "rename-symbol"
+category = "capability"
+title = "Cross-file rename including docs and tests"
+hypothesis = """Sanity task: rename must be complete (no stale references) and the package must still import and work."""
+prompts = [
+  """Rename `fetchUserData` to `fetch_user_data` across the whole package, including docs and tests.""",
+]
+timeout_s = 600
+tags = ["port:refactor"]
+
+[[graders]]
+type = "command_fails"
+cmd = "grep -rn fetchUserData --exclude-dir=.git --exclude-dir=__pycache__ ."
+
+[[graders]]
+type = "command_passes"
+cmd = "python3 $PROBE_DIR/check/verify.py"

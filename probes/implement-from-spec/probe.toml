@@ -1,0 +1,13 @@
+id = "implement-from-spec"
+category = "capability"
+title = "Implement a small data structure from a spec, with hidden tests"
+hypothesis = """Sanity task with a hidden checker covering edge cases the spec mentions (capacity 0, TTL, recency on update)."""
+prompts = [
+  """Implement SPEC.md.""",
+]
+timeout_s = 900
+tags = ["port:impl"]
+
+[[graders]]
+type = "command_passes"
+cmd = "python3 $PROBE_DIR/check/hidden_lru.py"

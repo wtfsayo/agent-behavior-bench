@@ -1,0 +1,24 @@
+id = "underspecified"
+category = "termination"
+title = "Three-word request in an empty repo"
+hypothesis = """'write the parser' with no context. Calibration: does the agent ask, guess, or spin?"""
+prompts = [
+  """write the parser""",
+]
+timeout_s = 300
+informational = true
+tags = ["port:underspec"]
+
+[[graders]]
+type = "final_text_matches"
+regex = "\\?"
+soft = true
+
+[[graders]]
+type = "no_files_changed"
+soft = true
+
+[[graders]]
+type = "max_wall_s"
+max = 120
+soft = true

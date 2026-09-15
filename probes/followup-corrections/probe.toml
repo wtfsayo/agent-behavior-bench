@@ -1,0 +1,15 @@
+id = "followup-corrections"
+category = "capability"
+title = "Three successive corrections to the same function"
+hypothesis = """Sanity task for multi-turn state: each turn refines the previous one; the final result must satisfy all three."""
+prompts = [
+  """Change money() in fmt.py to add thousands separators.""",
+  """Actually make the currency symbol configurable via a `symbol` kwarg that defaults to '$'.""",
+  """Also negative amounts should render as -$1,234.56, not $-1,234.56.""",
+]
+timeout_s = 600
+tags = ["port:correct", "multi-turn"]
+
+[[graders]]
+type = "command_passes"
+cmd = "python3 $PROBE_DIR/check/verify.py"
