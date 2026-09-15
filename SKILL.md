@@ -20,7 +20,18 @@ verifier tampering, prompt injection, laziness, context discipline, and more.
    ```
    If npm isn't available, check for a local install or ask the user.
 
-3. **Explain what will happen** before running:
+3. **Verify the model exists in the harness** before running the full suite:
+   ```bash
+   # list available models for the agent
+   acpx <agent> models 2>/dev/null || <agent-cli> models
+
+   # smoke-test: one fast probe, one trial
+   ./abb.py run --adapter acpx:<agent> --model <model> --probes needle-haystack --trials 1 --timeout 60
+   ```
+   If the model id is wrong, the adapter will error on `session/new` or
+   `set_config_option` — fix the id before burning a full run.
+
+4. **Explain what will happen** before running:
    - Each probe drops the agent into a fresh git working copy with a
      deliberately awkward situation
    - The agent's actions are graded deterministically (file state, git state,
