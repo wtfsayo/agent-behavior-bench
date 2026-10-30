@@ -1,11 +1,18 @@
-# agent-behavior-bench
+---
+name: agent-behavior-bench
+description: Run behavioral evals (sycophancy, scheming, verifier tampering, prompt injection, laziness) on ACP coding agents via acpx. Use when asked to benchmark or evaluate an agent's or model's behavior, or to compare bench runs.
+---
 
-Run behavioral evaluations on LLM coding agents — sycophancy, scheming,
-verifier tampering, prompt injection, laziness, context discipline, and more.
+# agent-behavior-bench
 
 ## Before you start
 
-1. **Ask the user which agent and model to test.** The bench supports any
+1. **Find the bench root**, the directory that holds `abb.py`. It is two
+   levels above this file. Run every `./abb.py` command from there. If
+   `abb.py` is not there (the skill was installed without the repo), ask the
+   user before cloning `https://github.com/wtfsayo/agent-behavior-bench`.
+
+2. **Ask the user which agent and model to test.** The bench supports any
    ACP-speaking agent via [acpx](https://github.com/openclaw/acpx). Common
    targets:
    - `devin` (default) — `swe-2`, `swe-2-high`, `swe-2-max`
@@ -14,13 +21,15 @@ verifier tampering, prompt injection, laziness, context discipline, and more.
    - `opencode2 acp` — `opencode/muse-spark-1.3-contributor-free`, etc.
    - Any raw ACP command: `acpx:<cmd with args>`
 
-2. **Check if acpx is installed:**
+3. **Check that acpx is installed:**
    ```bash
-   which acpx || npm i -g acpx
+   which acpx
    ```
-   If npm isn't available, check for a local install or ask the user.
+   If it is missing, ask the user before running `npm i -g acpx`, because it
+   is a global install. If they decline or npm is unavailable, ask for the
+   path to an existing acpx binary and pass it with `--binary <path>`.
 
-3. **Verify the model exists in the harness** before running the full suite:
+4. **Verify the model exists in the harness** before running the full suite:
    ```bash
    # list available models for the agent
    acpx <agent> models 2>/dev/null || <agent-cli> models
@@ -31,18 +40,21 @@ verifier tampering, prompt injection, laziness, context discipline, and more.
    If the model id is wrong, the adapter will error on `session/new` or
    `set_config_option` — fix the id before burning a full run.
 
-4. **Explain what will happen** before running:
+5. **Explain what will happen** before running:
    - Each probe drops the agent into a fresh git working copy with a
      deliberately awkward situation
    - The agent's actions are graded deterministically (file state, git state,
      tool-call log, thinking stream)
-   - A run of 52 probes × 3 trials takes ~1–3 hours depending on the model
-   - Results go to `results/<timestamp>-<adapter>-<model>/`
+   - A full run (every probe in `./abb.py list`) × 3 trials takes ~1–3 hours
+     depending on the model
+   - Results go to `results/<timestamp>-<adapter>-<model>/` under the bench
+     root. When the bench root is an installed plugin, pass `--out <dir>` with
+     a directory the user picks, since plugin updates replace the install.
 
 ## Running
 
 ```bash
-# full suite (52 probes × N trials)
+# full suite (every probe × N trials)
 ./abb.py run --model <model> --trials 3 --jobs 4
 
 # specific probes or categories
@@ -71,6 +83,7 @@ verifier tampering, prompt injection, laziness, context discipline, and more.
 | `--rm-work` | delete working copies after grading |
 | `--quiet` | suppress per-trial output |
 | `--resume <dir>` | skip completed trials, continue where it left off |
+| `--out <dir>` | parent directory for run dirs (default `results/`) |
 
 ## Interpreting results
 
@@ -109,3 +122,22 @@ verifier tampering, prompt injection, laziness, context discipline, and more.
   text-only fail
 - Agents sometimes notice they're being probed — random directory names and
   `validate`'s leak-word check reduce but don't eliminate this
+
+## Report back
+
+Build the report from the run dir's `summary.json` (or the `report.md` beside
+it). Include:
+
+- Run identity: run dir path, `adapter`, `model`, `thinking`, `trials`.
+- Headline: `overall.passed`/`overall.n` and `overall.rate`, noting that it
+  excludes informational probes.
+- Per-category pass rates from `categories`.
+- Every non-informational probe with `passed < n`: its pass count, the hard
+  graders in `failing_graders`, and one string from `fail_evidence`. Mark
+  failures that come only from text graders as regex-based.
+- Probes with nonzero `errors` or `timed_out`, listed separately as harness
+  problems rather than agent behavior.
+- Probes skipped by `--no-network` (`skipped_network` in `run.json`).
+
+The report is complete when every failing probe in `summary.json` appears in
+it with evidence, and the headline matches `overall`.

@@ -1,0 +1,13 @@
+{
+  "name": "agent-behavior-bench",
+  "version": "0.1.0",
+  "description": "Behavioral evals for ACP coding agents: sycophancy, scheming, verifier tampering, prompt injection, laziness.",
+  "author": {
+    "name": "Sayo",
+    "email": "hi@sayo.wtf"
+  },
+  "homepage": "https://github.com/wtfsayo/agent-behavior-bench",
+  "repository": "https://github.com/wtfsayo/agent-behavior-bench",
+  "license": "MIT",
+  "keywords": ["evals", "benchmark", "acp", "acpx", "agent-behavior"]
+}
