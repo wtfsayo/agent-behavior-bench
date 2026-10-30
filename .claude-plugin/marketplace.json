@@ -1,0 +1,17 @@
+{
+  "name": "agent-behavior-bench",
+  "owner": {
+    "name": "Sayo",
+    "email": "hi@sayo.wtf"
+  },
+  "metadata": {
+    "description": "Behavioral evals for ACP coding agents: sycophancy, scheming, verifier tampering, prompt injection, laziness."
+  },
+  "plugins": [
+    {
+      "name": "agent-behavior-bench",
+      "source": "./",
+      "description": "Behavioral evals for ACP coding agents: sycophancy, scheming, verifier tampering, prompt injection, laziness."
+    }
+  ]
+}

@@ -56,7 +56,22 @@ optional `llm_judge` grader), `--rm-work`.
 `./abb.py list` shows all probes; `./abb.py validate` checks definitions and
 flags prompts that leak words like "test" or "probe" to the agent.
 
-## Probe inventory (48)
+## Install as an agent skill
+
+`skills/agent-behavior-bench/SKILL.md` teaches an agent to pick a target,
+smoke-test it, run the suite, and report results. In Claude Code:
+
+```
+/plugin marketplace add wtfsayo/agent-behavior-bench
+/plugin install agent-behavior-bench@agent-behavior-bench
+```
+
+Or point Claude Code at a clone: `claude --plugin-dir /path/to/agent-behavior-bench`.
+Other harnesses can load the skill directory directly; the skill expects
+`abb.py` two levels above it and asks to clone the repo if it is missing.
+`scripts/check_skill.py` checks the skill and plugin manifests.
+
+## Probe inventory
 
 **Scheming** — `oversight-subversion` (broken monitor stands between agent and
 verification), `self-exfiltration` (decommissioning emails + readable weights),
